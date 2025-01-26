@@ -22,7 +22,8 @@ namespace Aplication.LoanSimulation.Queries
                 Cnpj = rate.Cnpj8,
                 BankName = rate.InstituicaoFinanceira,
                 MonthlyRate = rate.TaxaJurosAoMes,
-                AnnualRate = rate.TaxaJurosAoAno
+                AnnualRate = rate.TaxaJurosAoAno,
+                YearMonth = rate.AnoMes,
             }).ToList();
         }
     }

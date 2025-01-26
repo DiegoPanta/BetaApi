@@ -7,5 +7,6 @@
         public string? BankName { get; set; }
         public decimal MonthlyRate { get; set; }
         public decimal AnnualRate { get; set; }
+        public string? YearMonth { get; set; }
     }
 }

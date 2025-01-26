@@ -56,16 +56,46 @@ resource "aws_iam_role" "lambda_exec_role" {
   })
 }
 
-# Função Lambda que será integrada ao API Gateway
-resource "aws_lambda_function" "api_function_webapi" {
-  filename         = "../src/Presentation/bin/Release/net8.0/BetaApi.zip"
-  function_name    = "BetaApiWebApi"
-  handler          = "BetaApi::BetaApi.Function::FunctionHandler"
-  runtime          = "dotnet8"
-  role             = aws_iam_role.lambda_exec_role.arn
-  source_code_hash = filebase64sha256("../src/Presentation/bin/Release/net8.0/BetaApi.zip")
+resource "null_resource" "build_dotnet_lambda" {
+  provisioner "local-exec" {
+    command     = <<EOT
+      dotnet restore ../src/Presentation/Presentation.csproj
+      dotnet publish ../src/Presentation/Presentation.csproj -c Release -r win-x64 --self-contained false -o ../src/Presentation/publish
+    EOT
+    interpreter = ["PowerShell", "-Command"]
+  }
+  triggers = {
+    always_run = "${timestamp()}"
+  }
 }
 
+## Archiving the Artifacts
+data "archive_file" "lambda" {
+  type        = "zip"
+  source_dir  = "../src/Presentation/publish/"
+  output_path = "./BetaApi.zip"
+  depends_on  = [null_resource.build_dotnet_lambda]
+}
+
+## AWS Lambda Resources
+resource "aws_lambda_function" "api_function_webapi" {
+  filename         = "BetaApi.zip"
+  function_name    = "BetaApi"
+  role             = aws_iam_role.beta_api_role.arn
+  handler          = "BetaApi"
+  source_code_hash = data.archive_file.lambda.output_base64sha256
+  runtime          = "dotnet8"
+  depends_on       = [data.archive_file.lambda]
+  environment {
+    variables = {
+      ASPNETCORE_ENVIRONMENT = "Development"
+    }
+  }
+}
+resource "aws_lambda_function_url" "hello_api_url" {
+  function_name      = aws_lambda_function.api_function_webapi.function_name
+  authorization_type = "NONE"
+}
 # Criando a API Gateway
 resource "aws_apigatewayv2_api" "http_api" {
   name          = "beta-api"
@@ -117,6 +147,23 @@ resource "aws_iam_policy" "lambda_sqs_policy" {
       }
     ]
   })
+}
+
+## IAM Permissions and Roles related to Lambda
+data "aws_iam_policy_document" "assume_role" {
+  statement {
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role" "beta_api_role" {
+  name               = "beta_api_role"
+  assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
 # Anexando a política ao role da Lambda

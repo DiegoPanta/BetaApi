@@ -28,6 +28,15 @@ public class Startup
         services.AddScoped<ILoanSimulationRepository, LoanSimulationRepository>();
         services.AddScoped<InterestRateService>();
 
+        // Permitindo o frontend Vue
+        services.AddCors(options =>
+        {
+            options.AddPolicy("AllowFrontend", builder =>
+                builder.WithOrigins("http://localhost:5173") 
+                       .AllowAnyMethod()
+                       .AllowAnyHeader());
+        });
+
         // Configuração do Controller
         services.AddControllers();
         services.AddEndpointsApiExplorer();
@@ -47,6 +56,9 @@ public class Startup
                 c.RoutePrefix = string.Empty;
             });
         }
+
+        // Usando a política que você criou
+        app.UseCors("AllowFrontend"); 
 
         app.UseHttpsRedirection();
 

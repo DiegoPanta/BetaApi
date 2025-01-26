@@ -23,9 +23,15 @@ namespace Aplication.LoanSimulation.Commands
 
         public async Task<LoanSimulationResult> Handle(SimulateLoanCommand request, CancellationToken cancellationToken)
         {
+            var janeiro = 1;
             var data = await _interestRateService.GetLoanSimulationDataAsync();
-            var monthlyRate = data.Value.FirstOrDefault().TaxaJurosAoMes;
-            _loanCalculator.CalculateSimulation(request.LoanAmount, request.Installments, monthlyRate);
+            string yearMonth = $"{(DateTime.Now.Month == janeiro ? DateTime.Now.AddYears(-1).Year : DateTime.Now.Year)}-{DateTime.Now.AddMonths(-1).Month}";
+            var monthlyRate = data.Value.FirstOrDefault(x => x.Cnpj8 == request.BankId && x.AnoMes == yearMonth);
+            if (monthlyRate is null)
+            {
+                throw new Exception("Monthly Rate not found");
+            }
+            _loanCalculator.CalculateSimulation(request.LoanAmount, request.Installments, monthlyRate.TaxaJurosAoMes);
 
             var loanSimulationEntity = new LoanSimulationEntity
             {
@@ -35,7 +41,7 @@ namespace Aplication.LoanSimulation.Commands
                 TotalCost = _loanCalculator.TotalCost
             };
 
-            await _loanSimulationRepository.AddAsync(loanSimulationEntity, cancellationToken);
+            //await _loanSimulationRepository.AddAsync(loanSimulationEntity, cancellationToken);
 
             return await Task.FromResult(new LoanSimulationResult
             {
