@@ -170,3 +170,9 @@ $RECYCLE.BIN/
 .DS_Store
 
 _NCrunch*
+
+# Ignore .zip files
+*.zip
+
+# Ignore .lock.hcl files
+*.lock.hcl
