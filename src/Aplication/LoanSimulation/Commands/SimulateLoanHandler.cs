@@ -31,23 +31,34 @@ namespace Aplication.LoanSimulation.Commands
             {
                 throw new Exception("Monthly Rate not found");
             }
-            _loanCalculator.CalculateSimulation(request.LoanAmount, request.Installments, monthlyRate.TaxaJurosAoMes);
+
+            double monthlyInterestRateDecimal = _loanCalculator.CalculateInterestRate(monthlyRate.TaxaJurosAoMes);
+            _loanCalculator.CalculateMonthlySimulation(request.LoanAmount, request.Installments, monthlyInterestRateDecimal);
+            double annualInterestRateDecimal = _loanCalculator.CalculateInterestRate(monthlyRate.TaxaJurosAoAno);
+            _loanCalculator.CalculateAnnualSimulation(request.LoanAmount, annualInterestRateDecimal, request.Installments);
 
             var loanSimulationEntity = new LoanSimulationEntity
             {
-                LoanAmount = request.LoanAmount,
+                LoanAmount = Math.Round(request.LoanAmount, 2),
                 Installments = request.Installments,
-                MonthlyInstallment = _loanCalculator.MonthlyInstallment,
-                TotalCost = _loanCalculator.TotalCost
+                MonthlyInstallment = Math.Round(_loanCalculator.MonthlyInstallmentAmount, 2),
+                TotalCostMonth = Math.Round(_loanCalculator.TotalCostMonth, 2),
+                TotalAnnualCost = Math.Round(_loanCalculator.AnnualAmount, 2),
+                FinalCostYears = Math.Round(_loanCalculator.FinalAmountWithAnnualInterest, 2),
             };
 
-            //await _loanSimulationRepository.AddAsync(loanSimulationEntity, cancellationToken);
+            await _loanSimulationRepository.AddAsync(loanSimulationEntity, cancellationToken);
 
             return await Task.FromResult(new LoanSimulationResult
             {
-                MonthlyInstallment = _loanCalculator.MonthlyInstallment,
-                TotalCost = _loanCalculator.TotalCost
+                Installments = loanSimulationEntity.Installments,
+                LoanAmount = loanSimulationEntity.LoanAmount,
+                MonthlyInstallment = loanSimulationEntity.MonthlyInstallment,
+                TotalCostMonth = loanSimulationEntity.TotalCostMonth,
+                TotalAnnualCost = loanSimulationEntity.TotalAnnualCost,
+                FinalCostYears = loanSimulationEntity.FinalCostYears,
             });
         }
+
     }
 }

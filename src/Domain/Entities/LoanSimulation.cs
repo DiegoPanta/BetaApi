@@ -3,10 +3,13 @@
     public class LoanSimulationEntity
     {
         public Guid Id { get; set; } = Guid.NewGuid();
-        public decimal LoanAmount { get; set; }
+        public double LoanAmount { get; set; }
         public int Installments { get; set; }
-        public decimal MonthlyInstallment { get; set; }
-        public decimal TotalCost { get; set; }
+        public double MonthlyInstallment { get; set; }
+        public double TotalAnnualCost { get; set; }
+
+        public double FinalCostYears { get; set; }
+        public double TotalCostMonth { get; set; }
         public DateTime SimulationDate { get; set; } = DateTime.UtcNow;
     }
 }

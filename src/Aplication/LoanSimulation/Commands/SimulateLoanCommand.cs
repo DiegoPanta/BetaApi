@@ -13,7 +13,7 @@ namespace Aplication.LoanSimulation.Commands
 
         public required string BankId { get; set; }
 
-        public decimal LoanAmount { get; set; }
+        public double LoanAmount { get; set; }
 
         public int Installments { get; set; }
     }

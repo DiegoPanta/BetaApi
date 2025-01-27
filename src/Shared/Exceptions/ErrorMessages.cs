@@ -17,5 +17,6 @@ namespace Shared.Exceptions
         public static string InvalidInstallments => "O número de parcelas deve ser maior que zero.";
         public static string InvalidMonthlyRate => "A taxa de juros mensal deve ser maior que zero.";
         public static string NoBankRatesFound => "Nenhuma taxa de banco foi encontrada.";
+        public static string AnnualInterestRateMustBePositive => "The annual interest rate must be positive";
     }
 }
