@@ -18,7 +18,7 @@ namespace Presentation.Controllers
             _mediator = mediator;
         }
 
-        [HttpGet]
+        [HttpGet("bankRates")]
         public async Task<IActionResult> GetBankRates()
         {
             var query = new GetBankRatesQuery();
@@ -32,11 +32,33 @@ namespace Presentation.Controllers
             return Ok(result);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetAllSimulations()
+        {
+            var result = await _mediator.Send(new GetAllSimulationsQuery());
+            return Ok(result);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteLoanSimulation(Guid id)
+        {
+            try
+            {
+                await _mediator.Send(new DeleteLoanSimulationCommand(id));
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ErrorMessages.SimulationError, details = ex.Message });
+            }
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateSimulation([FromBody] SimulateLoanCommand command)
         {
-            var result = await _mediator.Send(command);
-            return Ok(result);
+            await _mediator.Send(command);
+            return NoContent();
         }
     }
 }

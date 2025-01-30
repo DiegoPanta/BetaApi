@@ -1,9 +1,8 @@
-﻿using Aplication.LoanSimulation.DTOs;
-using MediatR;
+﻿using MediatR;
 
 namespace Aplication.LoanSimulation.Commands
 {
-    public class SimulateLoanCommand : IRequest<LoanSimulationResult>
+    public class SimulateLoanCommand : IRequest<Unit>
     {
         public required string Name { get; set; }
 

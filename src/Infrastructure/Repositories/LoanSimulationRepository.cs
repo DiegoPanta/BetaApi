@@ -2,6 +2,7 @@
 using Amazon.DynamoDBv2.DataModel;
 using Domain.Entities;
 using Interfaces.IRepositories;
+using Shared.Exceptions;
 
 namespace Infrastructure.Repositories
 {
@@ -32,6 +33,15 @@ namespace Infrastructure.Repositories
         {
             return await _context.LoadAsync<LoanSimulationEntity>(id, cancellationToken);
         }
-    }
 
+        public async Task DeleteAsync(LoanSimulationEntity loanSimulation, CancellationToken cancellationToken)
+        {
+            if (loanSimulation == null)
+            {
+                throw new ArgumentNullException(nameof(loanSimulation), ErrorMessages.SimulationRequired);
+            }
+            
+            await _context.DeleteAsync<LoanSimulationEntity>(loanSimulation.Id, cancellationToken);
+        }
+    }
 }

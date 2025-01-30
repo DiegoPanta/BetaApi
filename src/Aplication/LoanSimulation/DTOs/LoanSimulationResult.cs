@@ -2,6 +2,7 @@
 {
     public class LoanSimulationResult
     {
+        public Guid Id { get; set; }
         public int Installments { get; set; }
         public double LoanAmount { get; set; }
         public double MonthlyInstallment { get; set; }

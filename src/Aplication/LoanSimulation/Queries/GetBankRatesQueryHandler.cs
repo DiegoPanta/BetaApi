@@ -17,14 +17,19 @@ namespace Aplication.LoanSimulation.Queries
         {
             var bankRates = await _interestRateService.GetLoanSimulationDataAsync();
 
-            return bankRates.Value.Select(rate => new BankRateResult
-            {
-                Cnpj = rate.Cnpj8,
-                BankName = rate.InstituicaoFinanceira,
-                MonthlyRate = rate.TaxaJurosAoMes,
-                AnnualRate = rate.TaxaJurosAoAno,
-                YearMonth = rate.AnoMes,
-            }).ToList();
+            return bankRates.Value
+                .Select(rate => new BankRateResult
+                {
+                    Cnpj = rate.Cnpj8,
+                    BankName = rate.InstituicaoFinanceira,
+                    MonthlyRate = rate.TaxaJurosAoMes,
+                    AnnualRate = rate.TaxaJurosAoAno,
+                    YearMonth = rate.AnoMes,
+                })
+                .GroupBy(rate => rate.Cnpj)
+                .Select(group => group.OrderBy(r => r.MonthlyRate)
+                                    .First())
+                .ToList();
         }
     }
 

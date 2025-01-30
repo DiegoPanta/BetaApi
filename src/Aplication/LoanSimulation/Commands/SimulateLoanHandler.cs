@@ -1,13 +1,13 @@
-﻿using Aplication.LoanSimulation.DTOs;
-using Domain.Business;
+﻿using Domain.Business;
 using Domain.Entities;
 using Infrastructure.ExternalServices;
 using Interfaces.IRepositories;
 using MediatR;
+using Shared.Exceptions;
 
 namespace Aplication.LoanSimulation.Commands
 {
-    public class SimulateLoanHandler : IRequestHandler<SimulateLoanCommand, LoanSimulationResult>
+    public class SimulateLoanHandler : IRequestHandler<SimulateLoanCommand, Unit>
     {
 
         private readonly LoanCalculator _loanCalculator;
@@ -21,7 +21,7 @@ namespace Aplication.LoanSimulation.Commands
             _interestRateService = interestRateService;
         }
 
-        public async Task<LoanSimulationResult> Handle(SimulateLoanCommand request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(SimulateLoanCommand request, CancellationToken cancellationToken)
         {
             var janeiro = 1;
             var data = await _interestRateService.GetLoanSimulationDataAsync();
@@ -29,7 +29,7 @@ namespace Aplication.LoanSimulation.Commands
             var monthlyRate = data.Value.FirstOrDefault(x => x.Cnpj8 == request.BankId && x.AnoMes == yearMonth);
             if (monthlyRate is null)
             {
-                throw new Exception("Monthly Rate not found");
+                throw new Exception(ErrorMessages.MonthlyRateNotFound);
             }
 
             double monthlyInterestRateDecimal = _loanCalculator.CalculateInterestRate(monthlyRate.TaxaJurosAoMes);
@@ -49,15 +49,7 @@ namespace Aplication.LoanSimulation.Commands
 
             await _loanSimulationRepository.AddAsync(loanSimulationEntity, cancellationToken);
 
-            return await Task.FromResult(new LoanSimulationResult
-            {
-                Installments = loanSimulationEntity.Installments,
-                LoanAmount = loanSimulationEntity.LoanAmount,
-                MonthlyInstallment = loanSimulationEntity.MonthlyInstallment,
-                TotalCostMonth = loanSimulationEntity.TotalCostMonth,
-                TotalAnnualCost = loanSimulationEntity.TotalAnnualCost,
-                FinalCostYears = loanSimulationEntity.FinalCostYears,
-            });
+            return Unit.Value;
         }
 
     }

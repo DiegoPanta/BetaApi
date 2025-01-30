@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Shared.Exceptions
+﻿namespace Shared.Exceptions
 {
     public static class ErrorMessages
     {
@@ -18,5 +12,9 @@ namespace Shared.Exceptions
         public static string InvalidMonthlyRate => "A taxa de juros mensal deve ser maior que zero.";
         public static string NoBankRatesFound => "Nenhuma taxa de banco foi encontrada.";
         public static string AnnualInterestRateMustBePositive => "The annual interest rate must be positive";
+        public static string SimulationNotFound => "Simulação não encontrada.";
+        public static string SimulationRequired => "A simulação não pode ser nula.";
+        public static string SimulationError => "Erro ao excluir a simulação.";
+        public static string MonthlyRateNotFound => "Monthly Rate not found.";
     }
 }
