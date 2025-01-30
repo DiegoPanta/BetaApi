@@ -1,4 +1,4 @@
-﻿namespace Infrastructure.Persistence
+﻿namespace Domain.ExternalServicesModels
 {
     public class ApiResponse
     {

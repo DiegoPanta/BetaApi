@@ -1,6 +1,6 @@
 ﻿using Domain.Business;
 using Domain.Entities;
-using Infrastructure.ExternalServices;
+using Interfaces.IExternalService;
 using Interfaces.IRepositories;
 using MediatR;
 using Shared.Exceptions;
@@ -12,9 +12,9 @@ namespace Aplication.LoanSimulation.Commands
 
         private readonly LoanCalculator _loanCalculator;
         private readonly ILoanSimulationRepository _loanSimulationRepository;
-        private readonly InterestRateService _interestRateService;
+        private readonly IInterestRateService _interestRateService;
 
-        public SimulateLoanHandler(LoanCalculator loanCalculator, ILoanSimulationRepository loanSimulationRepository, InterestRateService interestRateService)
+        public SimulateLoanHandler(LoanCalculator loanCalculator, ILoanSimulationRepository loanSimulationRepository, IInterestRateService interestRateService)
         {
             _loanCalculator = loanCalculator;
             _loanSimulationRepository = loanSimulationRepository;

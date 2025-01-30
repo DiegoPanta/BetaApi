@@ -1,13 +1,14 @@
 ﻿using Amazon.SQS;
 using Amazon.SQS.Model;
-using Infrastructure.Persistence;
+using Domain.ExternalServicesModels;
+using Interfaces.IExternalService;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Shared.Exceptions;
 
 namespace Infrastructure.ExternalServices
 {
-    public class InterestRateService
+    public class InterestRateService : IInterestRateService
     {
         private readonly HttpClient client;
         private static string? sqsQueueUrl;

@@ -1,14 +1,14 @@
 ﻿using Aplication.LoanSimulation.DTOs;
-using Infrastructure.ExternalServices;
+using Interfaces.IExternalService;
 using MediatR;
 
 namespace Aplication.LoanSimulation.Queries
 {
     public class GetBankRatesQueryHandler : IRequestHandler<GetBankRatesQuery, List<BankRateResult>>
     {
-        private readonly InterestRateService _interestRateService;
+        private readonly IInterestRateService _interestRateService;
 
-        public GetBankRatesQueryHandler(InterestRateService interestRateService)
+        public GetBankRatesQueryHandler(IInterestRateService interestRateService)
         {
             _interestRateService = interestRateService;
         }

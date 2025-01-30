@@ -3,6 +3,7 @@ using Aplication.LoanSimulation.Commands;
 using Domain.Business;
 using Infrastructure.ExternalServices;
 using Infrastructure.Repositories;
+using Interfaces.IExternalService;
 using Interfaces.IRepositories;
 using MediatR;
 
@@ -26,7 +27,7 @@ public class Startup
         services.AddSwaggerGen();
         services.AddSingleton<LoanCalculator>();
         services.AddScoped<ILoanSimulationRepository, LoanSimulationRepository>();
-        services.AddScoped<InterestRateService>();
+        services.AddScoped<IInterestRateService, InterestRateService>();
 
         // Permitindo o frontend Vue
         services.AddCors(options =>
