@@ -58,7 +58,7 @@ namespace Presentation.Controllers
         public async Task<IActionResult> CreateSimulation([FromBody] SimulateLoanCommand command)
         {
             await _mediator.Send(command);
-            return NoContent();
+            return Created();
         }
     }
 }
