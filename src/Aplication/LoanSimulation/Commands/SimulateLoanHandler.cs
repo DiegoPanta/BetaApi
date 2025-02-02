@@ -26,7 +26,8 @@ namespace Aplication.LoanSimulation.Commands
             var janeiro = 1;
             var data = await _interestRateService.GetLoanSimulationDataAsync();
             string yearMonth = $"{(DateTime.Now.Month == janeiro ? DateTime.Now.AddYears(-1).Year : DateTime.Now.Year)}-{DateTime.Now.AddMonths(-1).Month}";
-            var monthlyRate = data.Value.FirstOrDefault(x => x.Cnpj8 == request.BankId && x.AnoMes == yearMonth);
+            string yearMonthValid = $"2024-12";
+            var monthlyRate = data.Value.FirstOrDefault(x => x.Cnpj8 == request.BankId && x.AnoMes == yearMonthValid);
             if (monthlyRate is null)
             {
                 throw new Exception(ErrorMessages.MonthlyRateNotFound);

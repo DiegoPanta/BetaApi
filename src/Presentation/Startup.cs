@@ -29,6 +29,12 @@ public class Startup
         services.AddScoped<ILoanSimulationRepository, LoanSimulationRepository>();
         services.AddScoped<IInterestRateService, InterestRateService>();
 
+        //Resiliencia de serviços Polly
+        services.AddHttpClient<IInterestRateService, InterestRateService>()
+            .AddPolicyHandler(PollyPolicies.GetRetryPolicy())
+            .AddPolicyHandler(PollyPolicies.GetCircuitBreakerPolicy())
+            .AddPolicyHandler(PollyPolicies.GetTimeoutPolicy());
+
         // Permitindo o frontend Vue
         services.AddCors(options =>
         {
