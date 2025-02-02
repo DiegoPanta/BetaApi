@@ -12,19 +12,19 @@ namespace Aplication.LoanSimulation.Commands
 
         private readonly LoanCalculator _loanCalculator;
         private readonly ILoanSimulationRepository _loanSimulationRepository;
-        private readonly IInterestRateService _interestRateService;
+        private readonly ISqsConsumerService _sqsConsumerService;
 
-        public SimulateLoanHandler(LoanCalculator loanCalculator, ILoanSimulationRepository loanSimulationRepository, IInterestRateService interestRateService)
+        public SimulateLoanHandler(LoanCalculator loanCalculator, ILoanSimulationRepository loanSimulationRepository, ISqsConsumerService sqsConsumerService)
         {
             _loanCalculator = loanCalculator;
             _loanSimulationRepository = loanSimulationRepository;
-            _interestRateService = interestRateService;
+            _sqsConsumerService = sqsConsumerService;
         }
 
         public async Task<Unit> Handle(SimulateLoanCommand request, CancellationToken cancellationToken)
         {
             var janeiro = 1;
-            var data = await _interestRateService.GetLoanSimulationDataAsync();
+            var data = await _sqsConsumerService.GetLatestLoanSimulationDataAsync();
             string yearMonth = $"{(DateTime.Now.Month == janeiro ? DateTime.Now.AddYears(-1).Year : DateTime.Now.Year)}-{DateTime.Now.AddMonths(-1).Month}";
             string yearMonthValid = $"2024-12";
             var monthlyRate = data.Value.FirstOrDefault(x => x.Cnpj8 == request.BankId && x.AnoMes == yearMonthValid);

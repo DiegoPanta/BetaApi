@@ -16,5 +16,6 @@
         public static string SimulationRequired => "A simulação não pode ser nula.";
         public static string SimulationError => "Erro ao excluir a simulação.";
         public static string MonthlyRateNotFound => "Monthly Rate not found.";
+        public static string ErrorSendSQS => "Erro ao enviar mensagem para SQS.";
     }
 }

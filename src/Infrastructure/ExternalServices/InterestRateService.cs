@@ -4,7 +4,6 @@ using Amazon.SQS.Model;
 using Domain.ExternalServicesModels;
 using Interfaces.IExternalService;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
 using Shared.Exceptions;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
@@ -13,13 +12,16 @@ namespace Infrastructure.ExternalServices
     public class InterestRateService : IInterestRateService
     {
         private readonly HttpClient client;
+        private readonly IAmazonSQS _sqsClient;
+        private readonly ISqsService _sqsService;
         private static string? sqsQueueUrl;
         private static string? apiUrl;
 
-        public InterestRateService(HttpClient httpClient, IConfiguration configuration)
+        public InterestRateService(HttpClient httpClient, IAmazonSQS sqsClient, IConfiguration configuration, ISqsService sqsService)
         {
             client = httpClient;
-
+            _sqsClient = sqsClient;
+            _sqsService = sqsService;
             if (sqsQueueUrl == null)
             {
                 sqsQueueUrl = configuration.GetSection("SQS:QueueUrl").Value ?? 
@@ -55,34 +57,13 @@ namespace Infrastructure.ExternalServices
                 {
                     throw new InvalidOperationException(ErrorMessages.InvalidApiResponse);
                 }
-
-                 await SendToSQS(apiResponse);
+                await _sqsService.SendMessageAsync(sqsQueueUrl, apiResponse);
 
             return apiResponse;
             }
             catch (Exception ex)
             {
                 throw new Exception($"{ErrorMessages.GeneralError} {ex.Message}", ex);
-            }
-        }
-
-        private static async Task SendToSQS(ApiResponse data)
-        {
-            var sqsClient = new AmazonSQSClient();
-
-            var message = new SendMessageRequest
-            {
-                QueueUrl = sqsQueueUrl,
-                MessageBody = JsonConvert.SerializeObject(data)
-            };
-
-            try
-            {
-                var sendMessageResponse = await sqsClient.SendMessageAsync(message);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"{ErrorMessages.ErrorSendingToSQS} {ex.Message}");
             }
         }
     }

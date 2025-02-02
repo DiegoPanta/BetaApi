@@ -127,28 +127,6 @@ output "api_url" {
   value = aws_apigatewayv2_api.http_api.api_endpoint
 }
 
-# Criando a fila SQS
-resource "aws_sqs_queue" "loan_simulation_queue" {
-  name = "loanSimulationQueue"
-}
-
-# Permissão para que a função Lambda envie mensagens para a fila SQS
-resource "aws_iam_policy" "lambda_sqs_policy" {
-  name        = "LambdaSQSSendMessagePolicy"
-  description = "Permite à função Lambda enviar mensagens para a fila SQS"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action   = "sqs:SendMessage"
-        Effect   = "Allow"
-        Resource = aws_sqs_queue.loan_simulation_queue.arn
-      }
-    ]
-  })
-}
-
 ## IAM Permissions and Roles related to Lambda
 data "aws_iam_policy_document" "assume_role" {
   statement {
@@ -166,16 +144,61 @@ resource "aws_iam_role" "beta_api_role" {
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
+# Criando a fila SQS principal com Dead Letter Queue (DLQ)
+resource "aws_sqs_queue" "loan_simulation_queue" {
+  name                       = "loanSimulationQueue"
+  message_retention_seconds  = 86400 # Mensagens são retidas por 1 dia
+  visibility_timeout_seconds = 30    # Tempo para processamento da mensagem
+  delay_seconds              = 0     # Mensagem disponível imediatamente
+  receive_wait_time_seconds  = 10    # Long polling para reduzir custos
+
+  redrive_policy = jsonencode({
+    deadLetterTargetArn = aws_sqs_queue.loan_simulation_dlq.arn
+    maxReceiveCount     = 5 # Envia para DLQ após 5 tentativas falhas
+  })
+}
+
+# Criando uma Dead Letter Queue (DLQ) para mensagens que falharem
+resource "aws_sqs_queue" "loan_simulation_dlq" {
+  name                      = "loanSimulationQueue-DLQ"
+  message_retention_seconds = 1209600 # Mantém mensagens por 14 dias
+}
+
+# Criando a política para que a Lambda possa enviar mensagens para a fila SQS
+resource "aws_iam_policy" "lambda_sqs_policy" {
+  name        = "LambdaSQSSendMessagePolicy"
+  description = "Permite à função Lambda enviar mensagens para a fila SQS"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Action   = "sqs:SendMessage",
+        Resource = aws_sqs_queue.loan_simulation_queue.arn
+      }
+    ]
+  })
+}
+
 # Anexando a política ao role da Lambda
 resource "aws_iam_role_policy_attachment" "lambda_sqs_policy_attachment" {
   role       = aws_iam_role.lambda_exec_role.name
   policy_arn = aws_iam_policy.lambda_sqs_policy.arn
 }
 
-# Permissão para que o SQS invoque a Lambda (se necessário, dependendo do fluxo)
+# Permissão para que o SQS invoque a Lambda
 resource "aws_lambda_permission" "allow_sqs" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.api_function_webapi.function_name
   principal     = "sqs.amazonaws.com"
   source_arn    = aws_sqs_queue.loan_simulation_queue.arn
+}
+
+output "sqs_queue_url" {
+  value = aws_sqs_queue.loan_simulation_queue.url
+}
+
+output "sqs_dlq_url" {
+  value = aws_sqs_queue.loan_simulation_dlq.url
 }

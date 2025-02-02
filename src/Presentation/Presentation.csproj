@@ -15,7 +15,7 @@
     <PackageReference Include="Amazon.Lambda.AspNetCoreServer" Version="9.0.2" />
     <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.7.405.8" />
     <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="3.7.0" />
-    <PackageReference Include="MediatR" Version="12.4.1" />
+    <PackageReference Include="MediatR" Version="11.1.0" />
     <PackageReference Include="MediatR.Contracts" Version="2.0.1" />
     <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.3.0" />

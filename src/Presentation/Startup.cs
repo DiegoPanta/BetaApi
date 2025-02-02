@@ -1,4 +1,5 @@
 ﻿using Amazon.DynamoDBv2;
+using Amazon.SQS;
 using Aplication.LoanSimulation.Commands;
 using Domain.Business;
 using Infrastructure.ExternalServices;
@@ -23,17 +24,24 @@ public class Startup
         services.AddAWSService<IAmazonDynamoDB>();
 
         // Adicionar serviços
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(SimulateLoanHandler).Assembly));
+        services.AddMediatR(typeof(SimulateLoanHandler).Assembly);
         services.AddSwaggerGen();
         services.AddSingleton<LoanCalculator>();
         services.AddScoped<ILoanSimulationRepository, LoanSimulationRepository>();
         services.AddScoped<IInterestRateService, InterestRateService>();
+
+        //Registra serviços para envio e consumo de mensagens SQS
+        services.AddSingleton<ISqsService, SqsService>();
+        services.AddSingleton<ISqsConsumerService, SqsConsumerService>();
 
         //Resiliencia de serviços Polly
         services.AddHttpClient<IInterestRateService, InterestRateService>()
             .AddPolicyHandler(PollyPolicies.GetRetryPolicy())
             .AddPolicyHandler(PollyPolicies.GetCircuitBreakerPolicy())
             .AddPolicyHandler(PollyPolicies.GetTimeoutPolicy());
+
+        //Adiciona suporte ao AWS SQS
+        services.AddAWSService<IAmazonSQS>();
 
         // Permitindo o frontend Vue
         services.AddCors(options =>
