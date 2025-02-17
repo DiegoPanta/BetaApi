@@ -1,5 +1,8 @@
-﻿using Amazon.DynamoDBv2;
+﻿using Amazon.CloudWatchLogs;
+using Amazon.DynamoDBv2;
 using Amazon.SQS;
+using Amazon.XRay.Recorder.Core;
+using Amazon.XRay.Recorder.Handlers.AwsSdk;
 using Aplication.LoanSimulation.Commands;
 using Domain.Business;
 using Infrastructure.ExternalServices;
@@ -7,6 +10,10 @@ using Infrastructure.Repositories;
 using Interfaces.IExternalService;
 using Interfaces.IRepositories;
 using MediatR;
+using Serilog;
+using Serilog.Formatting.Compact;
+using Serilog.Formatting.Json;
+using Serilog.Sinks.AwsCloudWatch;
 
 namespace Presentation;
 
@@ -21,6 +28,52 @@ public class Startup
 
     public void ConfigureServices(IServiceCollection services)
     {
+        // AWS CloudWatch Logging Configuration
+        var logGroupName = "/aws/lambda/BetaApi";
+        var cloudWatchClient = new AmazonCloudWatchLogsClient();
+
+        var logDirectory = "logs";
+        if (!Directory.Exists(logDirectory))
+        {
+            Directory.CreateDirectory(logDirectory);
+        }
+
+        var options = new CloudWatchSinkOptions
+        {
+            LogGroupName = logGroupName,
+            TextFormatter = new JsonFormatter(),
+            MinimumLogEventLevel = Serilog.Events.LogEventLevel.Information,
+            BatchSizeLimit = 10,
+            Period = TimeSpan.FromSeconds(2),
+            CreateLogGroup = true
+        };
+
+        // Configure Serilog for JSON Structured Logging
+        Log.Logger = new LoggerConfiguration()
+             .MinimumLevel.Information()
+             .Enrich.FromLogContext()
+             .WriteTo.Console(new CompactJsonFormatter())  // Console output as JSON
+             .WriteTo.File(
+                 path: Path.Combine(logDirectory, "app_log.json"),
+                 rollingInterval: RollingInterval.Day,
+                 retainedFileCountLimit: 7,
+                 fileSizeLimitBytes: 10_000_000,
+                 flushToDiskInterval: System.TimeSpan.FromSeconds(5),
+                 formatter: new CompactJsonFormatter())  // Proper JSON formatting
+             .CreateLogger();
+
+        //Configuração cloudwatch
+        services.AddAWSService<IAmazonCloudWatchLogs>();
+        services.AddLogging(logging =>
+        {
+            logging.ClearProviders();
+            logging.AddSerilog();
+        });
+
+        // Enable AWS X-Ray
+        AWSSDKHandler.RegisterXRayForAllServices();
+
+        //adicionando dynamoDb
         services.AddAWSService<IAmazonDynamoDB>();
 
         // Adicionar serviços
@@ -33,6 +86,7 @@ public class Startup
         //Registra serviços para envio e consumo de mensagens SQS
         services.AddSingleton<ISqsService, SqsService>();
         services.AddSingleton<ISqsConsumerService, SqsConsumerService>();
+        services.AddSingleton<AWSXRayRecorder>();
 
         //Resiliencia de serviços Polly
         services.AddHttpClient<IInterestRateService, InterestRateService>()
@@ -59,7 +113,7 @@ public class Startup
         services.AddControllers();
     }
 
-    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
     {
         if (env.IsDevelopment())
         {
@@ -70,7 +124,11 @@ public class Startup
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Loan Calculation API v1");
                 c.RoutePrefix = string.Empty;
             });
+            app.UseXRay("BetaApi"); // Enables X-Ray tracing
         }
+
+        // Add Request Logging Middleware
+        app.UseMiddleware<RequestLoggingMiddleware>();
 
         // Usando a política que você criou
         app.UseCors("AllowFrontend"); 

@@ -202,3 +202,65 @@ output "sqs_queue_url" {
 output "sqs_dlq_url" {
   value = aws_sqs_queue.loan_simulation_dlq.url
 }
+
+# AWS CloudWatch Log Group
+resource "aws_cloudwatch_log_group" "betaapi_logs" {
+  name              = "BetaApiLogGroup"
+  retention_in_days = 30
+}
+
+# AWS CloudWatch Log Stream
+resource "aws_cloudwatch_log_stream" "betaapi_log_stream" {
+  name           = "BetaApiLogStream"
+  log_group_name = aws_cloudwatch_log_group.betaapi_logs.name
+}
+
+# AWS X-Ray Group
+resource "aws_xray_group" "betaapi_xray_group" {
+  group_name        = "betaapi-xray-group"
+  filter_expression = "service(\"BetaApi\")"
+}
+
+# IAM Role for CloudWatch and X-Ray
+resource "aws_iam_role" "betaapi_role" {
+  name = "BetaApiRole"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "ecs-tasks.amazonaws.com"
+      }
+    }]
+  })
+}
+
+# IAM Policy for CloudWatch and X-Ray permissions
+resource "aws_iam_policy" "betaapi_policy" {
+  name        = "BetaApiPolicy"
+  description = "Policy for CloudWatch Logs and X-Ray"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "xray:PutTraceSegments",
+          "xray:PutTelemetryRecords",
+          "xray:CreateGroup"
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# Attach IAM Policy to Role
+resource "aws_iam_role_policy_attachment" "betaapi_policy_attach" {
+  role       = aws_iam_role.betaapi_role.name
+  policy_arn = aws_iam_policy.betaapi_policy.arn
+}

@@ -4,6 +4,7 @@ using Amazon.SQS.Model;
 using Domain.ExternalServicesModels;
 using Interfaces.IExternalService;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Shared.Exceptions;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
@@ -16,9 +17,11 @@ namespace Infrastructure.ExternalServices
         private readonly ISqsService _sqsService;
         private static string? sqsQueueUrl;
         private static string? apiUrl;
+        private readonly ILogger<InterestRateService> _logger;
 
-        public InterestRateService(HttpClient httpClient, IAmazonSQS sqsClient, IConfiguration configuration, ISqsService sqsService)
+        public InterestRateService(HttpClient httpClient, IAmazonSQS sqsClient, IConfiguration configuration, ISqsService sqsService, ILogger<InterestRateService> logger)
         {
+            _logger = logger;
             client = httpClient;
             _sqsClient = sqsClient;
             _sqsService = sqsService;
@@ -33,12 +36,14 @@ namespace Infrastructure.ExternalServices
 
         public async Task<ApiResponse> GetLoanSimulationDataAsync()
         {
+            _logger.LogInformation("Fetching Monthly Rate from database/API.");
             try
             {
                 HttpResponseMessage response = await client.GetAsync(apiUrl);
 
                 if (!response.IsSuccessStatusCode)
                 {
+                    _logger.LogError("No Monthly Rate found in the database/API.");
                     throw new Exception($"Erro {response.StatusCode}: {response.ReasonPhrase}");
                 }
                 var content = await response.Content.ReadAsStringAsync();
