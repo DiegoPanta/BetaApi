@@ -8,7 +8,6 @@ using Shared.Exceptions;
 namespace Presentation.Controllers
 {
     [Route("api/[controller]")]
-    [AllowAnonymous]
     public class LoanSimulatorController : Controller
     {
         private readonly IMediator _mediator;
@@ -18,6 +17,7 @@ namespace Presentation.Controllers
             _mediator = mediator;
         }
 
+        [Authorize]
         [HttpGet("bankRates")]
         public async Task<IActionResult> GetBankRates()
         {
@@ -32,6 +32,7 @@ namespace Presentation.Controllers
             return Ok(result);
         }
 
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetAllSimulations()
         {
@@ -39,6 +40,7 @@ namespace Presentation.Controllers
             return Ok(result);
         }
 
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteLoanSimulation(Guid id)
         {
@@ -54,6 +56,7 @@ namespace Presentation.Controllers
             }
         }
 
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> CreateSimulation([FromBody] SimulateLoanCommand command)
         {
