@@ -1,5 +1,4 @@
-﻿using System.Text;
-using Amazon.CloudWatchLogs;
+﻿using Amazon.CloudWatchLogs;
 using Amazon.DynamoDBv2;
 using Amazon.SQS;
 using Amazon.XRay.Recorder.Core;
@@ -11,8 +10,6 @@ using Infrastructure.Repositories;
 using Interfaces.IExternalService;
 using Interfaces.IRepositories;
 using MediatR;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Formatting.Compact;
 using Serilog.Formatting.Json;
@@ -31,24 +28,6 @@ public class Startup
 
     public void ConfigureServices(IServiceCollection services)
     {
-        var key = Encoding.UTF8.GetBytes(Configuration["Jwt:Key"]);
-        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = Configuration["Jwt:Issuer"],
-                    ValidAudience = Configuration["Jwt:Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(key)
-                };
-            });
-
-        services.AddAuthorization();
-
         // AWS CloudWatch Logging Configuration
         var logGroupName = "/aws/lambda/BetaApi";
         var cloudWatchClient = new AmazonCloudWatchLogsClient();
@@ -157,7 +136,6 @@ public class Startup
         app.UseHttpsRedirection();
 
         app.UseRouting();
-        app.UseAuthentication();
         app.UseAuthorization();
 
         app.UseEndpoints(endpoints =>

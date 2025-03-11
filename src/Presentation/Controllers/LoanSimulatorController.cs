@@ -1,7 +1,6 @@
 using Aplication.LoanSimulation.Commands;
 using Aplication.LoanSimulation.Queries;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Exceptions;
 
@@ -17,7 +16,6 @@ namespace Presentation.Controllers
             _mediator = mediator;
         }
 
-        [Authorize]
         [HttpGet("bankRates")]
         public async Task<IActionResult> GetBankRates()
         {
@@ -32,7 +30,6 @@ namespace Presentation.Controllers
             return Ok(result);
         }
 
-        [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetAllSimulations()
         {
@@ -40,7 +37,6 @@ namespace Presentation.Controllers
             return Ok(result);
         }
 
-        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteLoanSimulation(Guid id)
         {
@@ -56,7 +52,6 @@ namespace Presentation.Controllers
             }
         }
 
-        [Authorize]
         [HttpPost]
         public async Task<IActionResult> CreateSimulation([FromBody] SimulateLoanCommand command)
         {
